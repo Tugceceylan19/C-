@@ -1,0 +1,318 @@
+    public partial class Form1 : Form
+    {
+        int Sayi1 = 0;
+        int Sayi2 = 0;
+        string Operatorum = "";
+        bool OperatorAktif = false;
+        bool sayi1Aktif = false;
+        bool sayi2Aktif = false;
+        bool Sayi2Start = false;
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "6";
+            }
+            else
+            {
+                txtAlan.Text += "6";
+                Sayi2Start = true;
+            }
+        }
+
+        
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "1";
+            }
+            else
+            {
+                txtAlan.Text += "1";
+                Sayi2Start = true;
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "2";
+            }
+            else
+            {
+                txtAlan.Text += "2";
+                Sayi2Start = true;
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "3";
+            }
+            else
+            {
+                txtAlan.Text += "3";
+                Sayi2Start = true;
+            }
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "4";
+            }
+            else
+            {
+                txtAlan.Text += "4";
+                Sayi2Start = true;
+            }
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "5";
+            }
+            else
+            {
+                txtAlan.Text += "5";
+                Sayi2Start = true;
+            }
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "7";
+            }
+            else
+            {
+                txtAlan.Text += "7";
+                Sayi2Start = true;
+            }
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "8";
+            }
+            else
+            {
+                txtAlan.Text += "8";
+                Sayi2Start = true;
+            }
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "9";
+            }
+            else
+            {
+                txtAlan.Text += "9";
+                Sayi2Start = true;
+            }
+        }
+
+        private void button0_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "0";
+            }
+            else
+            {
+                txtAlan.Text += "0";
+                Sayi2Start = true;
+            }
+        }
+
+        private void btntoplam_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "+";
+            }
+            else
+            {
+                txtAlan.Text += "+";
+                Sayi2Start = true;
+            }
+        }
+
+        private void btncıkarma_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "-";
+            }
+            else
+            {
+                txtAlan.Text += "-";
+                Sayi2Start = true;
+            }
+        }
+
+        private void btnbolme_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "/";
+            }
+            else
+            {
+                txtAlan.Text += "/";
+                Sayi2Start = true;
+            }
+        }
+
+        private void btnesittir_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+                txtAlan.Text += "=";
+            }
+            else
+            {
+                txtAlan.Text += "=";
+                Sayi2Start = true;
+            }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btncarpma_Click(object sender, EventArgs e)
+        {
+            if (!OperatorAktif)
+            {
+
+                txtAlan.Text += "*";
+            }
+            else
+            {
+                txtAlan.Text += "*";
+                Sayi2Start = true;
+            }
+        }
+        public void hesap(string op)
+        {
+            if (Alan.Text != "")
+            {
+                if (!sayi1aktif)
+                {
+                    sayi1 = Convert.ToInt32(Alan.Text);
+                    oparetor = op;
+                    sayi1aktif = true;
+                    oparetorAktif = true;
+                    Alan.Text += op;
+                }
+                else if (oparetorAktif && sayi2start)
+                {
+                    int sonuc = 0;
+                    string[] sayilar = Alan.Text.Split(oparetor);
+                    if (sayilar.Length > 0)
+                    {
+                        sayi2 = Convert.ToInt32(sayilar[1]);
+                        if (oparetor == "+")
+                        {
+                            sonuc = sayi1 + sayi2;
+                        }
+                        else if (oparetor == "-")
+                        {
+                            sonuc = sayi1 - sayi2;
+                        }
+                        else if (oparetor == "*")
+                        {
+                            sonuc = sayi1 * sayi2;
+                        }
+                        else if (oparetor == "/")
+                        {
+                            sonuc = sayi1 / sayi2;
+                        }
+                        sayi1 = sonuc;
+                        sayi2aktif = false;
+                        sayi2start = false;
+                        oparetor = op;
+                        sayi2 = 0;
+                        Alan.Text = sayi1 + op;
+
+                    }
+                }
+                else if (oparetorAktif && !sayi2aktif && !sayi2start)
+                {
+                    oparetor = op;
+                    Alan.Text = Alan.Text.Substring(0, Alan.Text.Length - 1);
+                    Alan.Text += op;
+                }
+                else
+                {
+                    oparetor = op;
+                    sayi1aktif = true;
+                    oparetorAktif = true;
+                    Alan.Text += oparetor;
+                }
+            }
+        }
+        private void button11_Click(object sender, EventArgs e)
+        {
+            hesap("+");
+        }
+
+        private void buttoneksi_Click(object sender, EventArgs e)
+        {
+            hesap("-");
+        }
+
+        private void buttoncarp_Click(object sender, EventArgs e)
+        {
+            hesap("*");
+        }
+
+        private void buttonbol_Click(object sender, EventArgs e)
+        {
+            hesap("/");
+        }
+
+        private void buttonessit_Click(object sender, EventArgs e)
+        {
+            hesap("");
+            oparetorAktif = false;
+            oparetor = "";
+
+        }
+
+        private void button16_Click(object sender, EventArgs e)
+        {
+            Alan.Text = Alan.Text.Substring(0, Alan.Text.Length - 1);
+            if (Alan.Text == "")
+            {
+                Alan.Text = " 0";
+            }
+        }
+}
