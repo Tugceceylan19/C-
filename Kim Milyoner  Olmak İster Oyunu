@@ -1,0 +1,231 @@
+-----------------DB----------------
+CREATE DATABASE MilionerDB;
+GO
+USE MilionerDB;
+CREATE TABLE Sorular (
+    SoruID INT IDENTITY(1,1) PRIMARY KEY,
+    SoruMetni NVARCHAR(MAX),
+    SecenekA NVARCHAR(255),
+    SecenekB NVARCHAR(255),
+    SecenekC NVARCHAR(255),
+    SecenekD NVARCHAR(255),
+    DogruCevap CHAR(1),
+    ZorlukSeviyesi INT
+);
+INSERT INTO Sorular (SoruMetni, SecenekA, SecenekB, SecenekC, SecenekD, DogruCevap, ZorlukSeviyesi)
+VALUES
+(N'Hangisi bir programlama dili değildir?', 'Python', 'HTML', 'Java', 'C#', 'B', 1),
+
+(N'Dünyanın en büyük okyanusu hangisidir?', 'Atlas Okyanusu', 'Hint Okyanusu', 'Arktik Okyanusu', 'Pasifik Okyanusu', 'D', 1),
+
+(N'Türkiye''nin başkenti neresidir?', 'İstanbul', 'Ankara', 'İzmir', 'Bursa', 'B', 1),
+
+(N'Einstein''ın ünlü formülü nedir?', 'F=ma', 'E=mc^2', 'a^2 + b^2 = c^2', 'PV=nRT', 'B', 2),
+
+(N'Hangisi bir gezegen değildir?', 'Mars', 'Venüs', 'Ay', 'Jüpiter', 'C', 2),
+
+(N'Türk edebiyatında "İnce Memed" romanının yazarı kimdir?', 'Yaşar Kemal', 'Orhan Pamuk', 'Nazım Hikmet', 'Ahmet Hamdi Tanpınar', 'A', 3);
+
+select* from Sorular;
+-------------------------C#----------------------
+    public partial class Form1 : Form
+    {
+        SqlConnection conn = new SqlConnection("Server=.;Database=MilionerDB;Trusted_Connection=True;");
+        DataRow aktifSoru;
+        int soruSeviyesi = 1;
+        int kalanSure = 30;
+        string dogruCevap = "";
+        Random rnd = new Random();
+        Button secilenButon = null;
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            PuanListesiniDoldur();
+            YeniSoruGetir();
+            timer1.Start();
+            btnA.Click += btnA_Click;
+            btnB.Click += btnB_Click;
+            btnC.Click += btnC_Click;
+            btnD.Click += btnD_Click;
+
+        }
+        private void PuanListesiniDoldur()
+        {
+            lstPuanlar.Items.Add("1. 1.000 TL");
+            lstPuanlar.Items.Add("2. 5.000 TL");
+            lstPuanlar.Items.Add("3. 10.000 TL");
+            lstPuanlar.Items.Add("4. 50.000 TL");
+            lstPuanlar.Items.Add("5. 250.000 TL");
+            lstPuanlar.Items.Add("6. 1.000.000 TL");
+        }
+        private void YeniSoruGetir()
+        {
+        
+            conn.Open();
+            SqlCommand cmd = new SqlCommand("SELECT TOP 1 * FROM Sorular WHERE ZorlukSeviyesi = @sev ORDER BY NEWID()", conn);
+            cmd.Parameters.AddWithValue("@sev", soruSeviyesi);
+            SqlDataAdapter da = new SqlDataAdapter(cmd);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            conn.Close();
+
+            if (dt.Rows.Count > 0)
+            {
+                aktifSoru = dt.Rows[0];
+
+                ResetButonlar(); // 🟢 önce butonları aktif et
+
+                lblSoru.Text = aktifSoru["SoruMetni"].ToString();
+                btnA.Text = "A) " + aktifSoru["SecenekA"];
+                btnB.Text = "B) " + aktifSoru["SecenekB"];
+                btnC.Text = "C) " + aktifSoru["SecenekC"];
+                btnD.Text = "D) " + aktifSoru["SecenekD"];
+                dogruCevap = aktifSoru["DogruCevap"].ToString();
+                lblZorlukSeviyesi.Text = "Zorluk: " + aktifSoru["ZorlukSeviyesi"].ToString();
+
+                kalanSure = 30;
+                lblSure.Text = "Süre: 30";
+                timer1.Start();
+            }
+        }
+
+        
+        private void SikkiSec(Button btn)
+        {
+         
+            ResetButonlar();
+            btn.BackColor = Color.Yellow;
+            secilenButon = btn;
+            btnEminim.Enabled = true;
+            MessageBox.Show("Butona tıklandı: " + btn.Name);// 🟢 BUTONU AKTİF YAP
+        }   // Eminim butonunu aktif et
+        
+
+        private void ResetButonlar()
+        {
+            foreach (var btn in new[] { btnA, btnB, btnC, btnD })
+            {
+                btn.Enabled = true; // 🔴 Bu satır çok önemli!
+                btn.BackColor = Color.LightGray;
+            }
+            btnEminim.Enabled = false;
+            secilenButon = null;
+        }
+       
+
+        private void btnA_Click(object sender, EventArgs e) => SikkiSec(btnA);
+        private void btnB_Click(object sender, EventArgs e) => SikkiSec(btnB);
+        private void btnC_Click(object sender, EventArgs e) => SikkiSec(btnC);
+        private void btnD_Click(object sender, EventArgs e) => SikkiSec(btnD);
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            kalanSure--;
+            lblSure.Text = "Süre: " + kalanSure;
+
+            if (kalanSure == 0)
+            {
+                timer1.Stop();
+                MessageBox.Show("Süre doldu!");
+                Application.Exit();
+            }
+        }
+
+        private void btnYariYariya_Click(object sender, EventArgs e)
+        {
+       
+            string[] secenekler = { "A", "B", "C", "D" };
+            var yanlislar = secenekler.Where(s => s != dogruCevap).OrderBy(x => rnd.Next()).Take(2).ToList();
+
+            foreach (string harf in yanlislar)
+            {
+                if (harf == "A") btnA.Enabled = false;
+                if (harf == "B") btnB.Enabled = false;
+                if (harf == "C") btnC.Enabled = false;
+                if (harf == "D") btnD.Enabled = false;
+            }
+
+            btnYariYariya.Enabled = false;
+        
+
+    }
+
+        private void btnSeyirci_Click(object sender, EventArgs e)
+        {
+          
+            int dogru = rnd.Next(50, 80);
+            int kalan = 100 - dogru;
+            int yanlis1 = rnd.Next(0, kalan);
+            int yanlis2 = rnd.Next(0, kalan - yanlis1);
+            int yanlis3 = 100 - (dogru + yanlis1 + yanlis2);
+
+            string[] secenekler = { "A", "B", "C", "D" };
+            string[] yuzdeler = new string[4];
+
+            for (int i = 0; i < 4; i++)
+            {
+                if (secenekler[i] == dogruCevap)
+                    yuzdeler[i] = secenekler[i] + ": " + dogru + "%";
+                else if (yuzdeler[1] == null)
+                    yuzdeler[i] = secenekler[i] + ": " + yanlis1 + "%";
+                else if (yuzdeler[2] == null)
+                    yuzdeler[i] = secenekler[i] + ": " + yanlis2 + "%";
+                else
+                    yuzdeler[i] = secenekler[i] + ": " + yanlis3 + "%";
+            }
+
+            lblSeyirci.Text = string.Join("   ", yuzdeler);
+            btnSeyirci.Enabled = false;
+        }
+
+
+        private void btnEminim_Click(object sender, EventArgs e)
+        {
+            
+            if (secilenButon == null)
+            {
+                MessageBox.Show("Lütfen önce bir şık seçin.");
+                return;
+            }
+
+            string secilenHarf = secilenButon.Name.Last().ToString();
+
+            if (secilenHarf == dogruCevap)
+            {
+                secilenButon.BackColor = Color.Green;
+                lstPuanlar.SelectedIndex = soruSeviyesi - 1;
+                soruSeviyesi++;
+
+                if (soruSeviyesi > 6)
+                {
+                    MessageBox.Show("Tebrikler! 1 Milyon TL kazandınız!");
+                    Application.Exit();
+                }
+                else
+                {
+                    YeniSoruGetir();
+                }
+            }
+            else
+            {
+                secilenButon.BackColor = Color.Red;
+
+                // Doğru olan şıkkı da yeşil yap
+                if (dogruCevap == "A") btnA.BackColor = Color.Green;
+                if (dogruCevap == "B") btnB.BackColor = Color.Green;
+                if (dogruCevap == "C") btnC.BackColor = Color.Green;
+                if (dogruCevap == "D") btnD.BackColor = Color.Green;
+
+                MessageBox.Show("Yanlış cevap. Oyun bitti.");
+                Application.Exit();
+            
+        }
+
+    }
+
+    }
+}
+
