@@ -1,0 +1,333 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace WindowsFormsApp2
+{
+    public partial class Form1 : Form
+    {
+        SqlConnection baglanti = new SqlConnection("Server=.;Database=OgrenciTakipDB;Trusted_Connection=True;");
+        public Form1()
+        {
+            InitializeComponent();
+            this.BackgroundImage = Image.FromFile("D:\\TUĞÇE\\Öğrenci Otomsyonu\\img\\download.jpg");
+
+            // Resmin formda nasıl görüneceğini ayarlayabilirsiniz
+            this.BackgroundImageLayout = ImageLayout.Stretch;
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+           
+            DanismanlariGetir();
+            Listele();
+            KurslariGetir();
+        }
+        void Listele()
+        {
+            //SqlDataAdapter da = new SqlDataAdapter("SELECT O.OgrenciID, O.Ad, O.Soyad, O.Numara, O.Bolum, D.AdSoyad AS Danisman FROM Ogrenciler O INNER JOIN Danismanlar D ON O.DanismanID = D.DanismanID INNER JOIN Kurslar K ON O.KursID = K.KursID", baglanti);
+            SqlDataAdapter da = new SqlDataAdapter(
+          "SELECT O.OgrenciID, O.Ad, O.Soyad, O.Numara, O.Bolum, " +
+          "D.AdSoyad AS Danisman, K.KursAdi AS Kurs " + 
+          "FROM Ogrenciler O " +
+          "INNER JOIN Danismanlar D ON O.DanismanID = D.DanismanID " +
+          "INNER JOIN Kurslar K ON O.KursID = K.KursID", baglanti);
+
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            dataGridView1.AutoGenerateColumns = true;
+            dataGridView1.DataSource = dt;
+            MessageBox.Show("Öğrenci Kayıt Sayısı: " + dt.Rows.Count);
+
+        }
+        void DanismanlariGetir()
+        {
+            SqlCommand komut = new SqlCommand("SELECT * FROM Danismanlar", baglanti);
+            baglanti.Open();
+            SqlDataReader dr = komut.ExecuteReader();
+            while (dr.Read())
+            {
+                comboDanisman.Items.Add(new ComboboxItem { Text = dr["AdSoyad"].ToString(), Value = dr["DanismanID"] });
+            }
+            baglanti.Close();
+        }
+
+        
+        private void btnEkle_Click(object sender, EventArgs e)
+        {
+            if (comboDanisman.SelectedItem == null || comboKurs.SelectedItem == null)
+            {
+                MessageBox.Show("Lütfen danışman ve kurs seçin.");
+                return;
+            }
+            var danismanID = Convert.ToInt32((comboDanisman.SelectedItem as ComboboxItem).Value);
+            var kursID = Convert.ToInt32((comboKurs.SelectedItem as ComboboxItem).Value);
+
+            SqlCommand komut = new SqlCommand("INSERT INTO Ogrenciler (Ad, Soyad, Numara, Bolum, DanismanID, KursID) VALUES (@ad, @soyad, @numara, @bolum, @danismanID, @kursID)", baglanti);
+
+            // SqlCommand komut = new SqlCommand("INSERT INTO Ogrenciler (Ad, Soyad, Numara, Bolum, DanismanID) VALUES (@ad, @soyad, @numara, @bolum, @danismanID)", baglanti);
+            komut.Parameters.AddWithValue("@ad", txtAd.Text);
+            komut.Parameters.AddWithValue("@soyad", txtSoyad.Text);
+            komut.Parameters.AddWithValue("@numara", txtNumara.Text);
+            komut.Parameters.AddWithValue("@bolum", txtBolum.Text);
+            komut.Parameters.AddWithValue("@danismanID", danismanID);
+            komut.Parameters.AddWithValue("@kursID", kursID);
+            SqlCommand sayiArtir = new SqlCommand("UPDATE Kurslar SET OgrenciSayisi = OgrenciSayisi + 1 WHERE KursID = @kursID", baglanti);
+            sayiArtir.Parameters.AddWithValue("@kursID", kursID);
+            
+           // sayiArtir.ExecuteNonQuery();
+
+            baglanti.Open();
+            sayiArtir.ExecuteNonQuery();
+            komut.ExecuteNonQuery();
+            baglanti.Close();
+            //sayiArtir.ExecuteNonQuery();
+            MessageBox.Show("Öğrenci eklendi");
+            Listele();
+        }
+
+        private void btnSil_Click(object sender, EventArgs e)
+        {
+            // int id = Convert.ToInt32(dataGridView1.CurrentRow.Cells["OgrenciID"].Value);
+
+            //SqlCommand komut = new SqlCommand("DELETE FROM Ogrenciler WHERE OgrenciID = @id", baglanti);
+            // komut.Parameters.AddWithValue("@id", id);
+            //baglanti.Open();
+            //komut.ExecuteNonQuery();
+            // baglanti.Close();
+            //MessageBox.Show("Öğrenci silindi");
+            // Listele();
+            try
+            {
+                if (dataGridView1.CurrentRow == null)
+                {
+                    MessageBox.Show("Silmek için önce bir öğrenci seçin.");
+                    return;
+                }
+
+                int id = Convert.ToInt32(dataGridView1.CurrentRow.Cells["OgrenciID"].Value);
+
+                if (baglanti.State != ConnectionState.Open)
+                    baglanti.Open();
+
+                SqlCommand komut = new SqlCommand("DELETE FROM Ogrenciler WHERE OgrenciID = @id", baglanti);
+                komut.Parameters.AddWithValue("@id", id);
+
+                int affectedRows = komut.ExecuteNonQuery();
+
+                baglanti.Close();
+
+                if (affectedRows > 0)
+                    MessageBox.Show("Öğrenci silindi.");
+                else
+                    MessageBox.Show("Öğrenci bulunamadı veya silinemedi.");
+
+                Listele(); // DataGridView'i güncelle
+            }
+            catch (Exception ex)
+            {
+                if (baglanti.State == ConnectionState.Open)
+                    baglanti.Close();
+
+                MessageBox.Show("Silme işleminde hata oluştu: " + ex.Message);
+            }
+
+
+        }
+
+        private void btnGuncelle_Click(object sender, EventArgs e)
+        {
+            if (comboDanisman.SelectedItem == null)
+            {
+                MessageBox.Show("Lütfen geçerli bir danışman seçiniz.");
+                return;
+            }
+            int id = Convert.ToInt32(dataGridView1.CurrentRow.Cells["OgrenciID"].Value);
+            var danismanID = (comboDanisman.SelectedItem as ComboboxItem).Value;
+
+            SqlCommand komut = new SqlCommand("UPDATE Ogrenciler SET Ad=@ad, Soyad=@soyad, Numara=@numara, Bolum=@bolum, DanismanID=@danismanID WHERE OgrenciID=@id", baglanti);
+            komut.Parameters.AddWithValue("@ad", txtAd.Text);
+            komut.Parameters.AddWithValue("@soyad", txtSoyad.Text);
+            komut.Parameters.AddWithValue("@numara", txtNumara.Text);
+            komut.Parameters.AddWithValue("@bolum", txtBolum.Text);
+            komut.Parameters.AddWithValue("@danismanID", danismanID);
+            komut.Parameters.AddWithValue("@id", id);
+            //komut.Parameters.AddWithValue("@kursID", kursID);
+
+            baglanti.Open();
+            komut.ExecuteNonQuery();
+            baglanti.Close();
+            MessageBox.Show("Öğrenci güncellendi");
+            Listele();
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            txtAd.Text = dataGridView1.CurrentRow.Cells["Ad"].Value.ToString();
+            txtSoyad.Text = dataGridView1.CurrentRow.Cells["Soyad"].Value.ToString();
+            txtNumara.Text = dataGridView1.CurrentRow.Cells["Numara"].Value.ToString();
+            txtBolum.Text = dataGridView1.CurrentRow.Cells["Bolum"].Value.ToString();
+            comboDanisman.Text = dataGridView1.CurrentRow.Cells["Danisman"].Value.ToString();
+            Listele();
+            string danismanAdi = dataGridView1.CurrentRow.Cells["Danisman"].Value.ToString();
+            comboKurs.Text = dataGridView1.CurrentRow.Cells["Kurs"].Value.ToString();
+            Listele();
+            string kursAdi = dataGridView1.CurrentRow.Cells["Kurs"].Value.ToString();
+
+            foreach (ComboboxItem item in comboKurs.Items)
+            {
+                if (item.Text == kursAdi)
+                {
+                    comboKurs.SelectedItem = item;
+                    break;
+                }
+            }
+            foreach (ComboboxItem item in comboDanisman.Items)
+            {
+                if (item.Text == danismanAdi)
+                {
+                    comboDanisman.SelectedItem = item;
+                    break;
+                }
+            }
+        }
+        public class ComboboxItem
+        {
+            public string Text { get; set; }
+            public object Value { get; set; }
+            public override string ToString() => Text;
+        }
+        private void btnHepsiniListele_Click(object sender, EventArgs e)
+        {
+            Listele(); // Bu zaten tüm öğrencileri getiren mevcut metodun
+        }
+        private void comboDanisman_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboDanisman.SelectedItem != null)
+            {
+                int danismanID = (int)(comboDanisman.SelectedItem as ComboboxItem).Value;
+                OgrencileriListeleByDanisman(danismanID);
+            }
+        }
+        void OgrencileriListeleByDanisman(int danismanID)
+        {
+            SqlDataAdapter da = new SqlDataAdapter(
+                "SELECT O.OgrenciID, O.Ad, O.Soyad, O.Numara, O.Bolum, " +
+        "D.AdSoyad AS Danisman, K.KursAdi AS Kurs " +
+        "FROM Ogrenciler O " +
+        "INNER JOIN Danismanlar D ON O.DanismanID = D.DanismanID " +
+        "INNER JOIN Kurslar K ON O.KursID = K.KursID " +
+        "WHERE O.DanismanID = @danismanID", baglanti);
+
+            da.SelectCommand.Parameters.AddWithValue("@danismanID", danismanID);
+
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            dataGridView1.DataSource = dt;
+        }
+
+        private void txtAd_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnTumOgrenciler_Click(object sender, EventArgs e)
+        {
+            comboDanisman.SelectedIndex = -1;
+            Listele();
+        
+    }
+        void KurslariGetir()
+        {
+            SqlCommand komut = new SqlCommand("SELECT KursID, KursAdi, OgrenciSayisi FROM Kurslar", baglanti);
+            baglanti.Open();
+            SqlDataReader dr = komut.ExecuteReader();
+            while (dr.Read())
+            {
+                string kursBilgi = $"{dr["KursAdi"]} ({dr["OgrenciSayisi"]} öğrenci)";
+                comboKurs.Items.Add(new ComboboxItem
+                {
+                    Text = kursBilgi,
+                    Value = dr["KursID"]
+                });
+            }
+            baglanti.Close();
+        }
+
+        private void comboKurs_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //comboKurs.Text = dataGridView1.CurrentRow.Cells["Kurs"].Value.ToString();
+            if (comboKurs.SelectedItem == null)
+            {
+                MessageBox.Show("Lütfen bir kurs seçin.");
+                return;
+            }
+            var secilenKurs = comboKurs.SelectedItem as ComboboxItem;
+        }
+    }
+}
+-----------------DB------------------------
+CREATE DATABASE OgrenciTakipDB;
+GO
+USE OgrenciTakipDB;
+
+-- Danışman Tablosu
+CREATE TABLE Danismanlar (
+    DanismanID INT PRIMARY KEY IDENTITY(1,1),
+    AdSoyad NVARCHAR(100),
+    Eposta NVARCHAR(100)
+);
+
+-- Öğrenci Tablosu
+CREATE TABLE Ogrenciler (
+    OgrenciID INT PRIMARY KEY IDENTITY(1,1),
+    Ad NVARCHAR(50),
+    Soyad NVARCHAR(50),
+    Numara NVARCHAR(20),
+    Bolum NVARCHAR(50),
+    DanismanID INT FOREIGN KEY REFERENCES Danismanlar(DanismanID)
+);
+
+-- Devamsızlık Tablosu
+CREATE TABLE Devamsizliklar (
+    KayitID INT PRIMARY KEY IDENTITY(1,1),
+    OgrenciID INT FOREIGN KEY REFERENCES Ogrenciler(OgrenciID),
+    Tarih DATE,
+    DevamsizMi BIT  -- 1: Devamsız, 0: Katıldı
+);
+INSERT INTO Danismanlar (AdSoyad, Eposta)
+VALUES ('Dr. Erol Godür', 'e.godür@beu.edu.tr');
+INSERT INTO Danismanlar (AdSoyad, Eposta)
+VALUES ('Dr. İrfan Ökten', 'i.ökten@beu.edu.tr');
+INSERT INTO Danismanlar (AdSoyad, Eposta)
+VALUES ('Dr. Gökhan ALTUN', 'G.ALTUN@beu.edu.tr');
+
+select*from Ogrenciler
+
+CREATE TABLE Kurslar (
+    KursID INT PRIMARY KEY IDENTITY(1,1),
+    KursAdi NVARCHAR(100) NOT NULL
+);
+INSERT INTO Kurslar (KursAdi) VALUES
+('C# Programlama'),
+('Web Tasarımı'),
+('Veri Tabanı Yönetimi'),
+('Mobil Uygulama Geliştirme');
+ALTER TABLE Ogrenciler ADD KursID INT;
+KursID INT FOREIGN KEY REFERENCES Kurslar(KursID)
+
+SELECT O.OgrenciID, O.Ad, O.Soyad, O.Numara, O.Bolum, 
+       D.AdSoyad AS Danisman, K.KursAdi AS Kurs
+FROM Ogrenciler O
+INNER JOIN Danismanlar D ON O.DanismanID = D.DanismanID
+INNER JOIN Kurslar K ON O.KursID = K.KursID
+WHERE O.DanismanID = 1; -- örnek danışman ID
+ALTER TABLE Kurslar ADD OgrenciSayisi INT DEFAULT 0;
+                                                  
